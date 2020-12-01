@@ -40,7 +40,7 @@
 	</section>
 
 	<section>
-		<h1>The Problem: Conoway's Reverse Game of Life</h1>
+		<h1>The Problem: Conway's Reverse Game of Life</h1>
 		<p>The goal of this competition is to take an end state and a given number of time steps, then generate a state that could have been the start state. This has a few notable problems:</p>
 		<ul>
 			<li>Some (if not most) configurations die out, leaving nothing left. This will be impossible to predict.</li>
@@ -55,11 +55,11 @@
 		<h1>The Approach: Iterative CNN</h1>
 		<p>My first, naive, approach was to literally take the output and put it back in as the input once for each time step. However, a lot of old relationships were lost this way, and mistakes built upon mistakes, making this a terrible approach.</p>
 
-		<img src="Conoway_CNN.jpg">
+		<img src="Conway_CNN.jpg">
 
 		<p>To improve this model, I made the iterative portion a part of a larger neural network. The iterative portion was modified so that the padding matched the convolutions perfectly. As a result, the neural network could expand or shrink to match the number of time steps for each input. Finally, it went through a few fully connected layers before being activated by a sigmoid function. This new approach allowed the neural network to learn from each iteration instead of just the last one. The results were far better this way, with the submission having less than half the error.</p>
 
-		<img src="Improved_Conoway_CNN.jpg">
+		<img src="Improved_Conway_CNN.jpg">
 
 		<p>Despite the problems noted above (in the "The Problem" section), this configuration did alright. The Binary Cross Entropy Logistic Loss (chosen because in this case, we are working with 1's and 0's) converged to about .69, and the overall score came out to .14689 (which was middle of the road; 133/189). The convolutions were able to find enough patterns that worked in order to make decent predictions.</p>
 	</section>
