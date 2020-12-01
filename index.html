@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<title>Conway's Reverse Game of Life</title>
+	<link rel="stylesheet" href="styles.css?v=1.0">
+</head>
+
+<body>
+
+	<section>
+		<h1>Conway's Game of Life</h1>
+
+		<p>Conway's game of life is a essentially a grid of cells that live (or die) by a simple set of rules. They are:</p>
+		<ul>
+			<li>If a living cell is surrounded by 2 or 3 cells, it survives to the next time step.</li>
+			<li>If a living cell is surrounded by more than 3 cells, it dies of over population.</li>
+			<li>If a living cell is surrounded by less than 2 cells, it dies of under population.</li>
+			<li>If a dead cell is surrounded by 3 cells, it is reborn.</li>
+		</ul>
+
+		<p>Let's look at a few examples. The living cells are black, the dead cells are white.</p>
+
+		<p>Because each living cell touches exactly 2 other living cells, this won't change over time:</p>
+		<img src="98px-Game_of_life_beehive.svg.png">
+
+		<p>Because each living cell touches exactly 3 other living cells, this won't change over time either:</p>
+		<img src="Game_of_life_block_with_border.svg.png">
+
+		<p>In this example, the middle cell always touches two living cells, so it remains; the outer cells alter between touching 1 cell (and dying), and touching 3 cells (and being brought to life). This is called a blinker:</p>
+		<img src="Game_of_life_blinker.gif">
+
+		<p>In a similar fashion, some patterns look as if they move:</p>
+		<img src="Game_of_life_animated_glider.gif">
+
+		<p>The patterns can get quite interesting and complex. This is a famous one called Gopher's Glider Gun:</p>
+		<img src="Gospers_glider_gun.gif">
+
+	</section>
+
+	<section>
+		<h1>The Problem: Conoway's Reverse Game of Life</h1>
+		<p>The goal of this competition is to take an end state and a given number of time steps, then generate a state that could have been the start state. This has a few notable problems:</p>
+		<ul>
+			<li>Some (if not most) configurations die out, leaving nothing left. This will be impossible to predict.</li>
+			<li>Multiple start states can end in the same final state.</li>
+			<li>The rules of this game are notably hard for a neural network to learn, and going in reverse certainly doesn't make it easier (2).</li>
+		</ul>
+
+		<p>As such, it is difficult for a neural network to generate a decent start state, and literally impossible to know which of the possible given start states is the "correct" one. Luckily, any valid start state is acceptable in this competion. However, the complexity of being able to generate any start state from the end goal makes it difficult for a neural network to "learn" the patterns.</p>
+	</section>
+
+	<section>
+		<h1>The Approach: Iterative CNN</h1>
+		<p>My first, naive, approach was to litterally take the output and put it back in as the input once for each time step. However, a lot of old relationships were lost this way, and mistakes built upon mistakes, making this a terrible approach.</p>
+
+		<img src="Conoway_CNN.jpg">
+
+		<p>To improve this model, I made the iterative portion a part of a larger neural network. The iterative portion was modified so that the padding matched the convolutions perfectly. As a result, the neural network could expand or shrink to match the number of time steps for each input. Finally, it went through a few fully connected layers before being activated by a sigmoid function. This new approach allowed the neural network to learn from each iteration instead of just the last one. The results were far better this way, with the submission having less than half the error.</p>
+
+		<img src="Improved_Conoway_CNN.jpg">
+
+		<p>Despite the problems noted above (in the "The Problem" section), this configuration did alright. The Binary Cross Entropy Logistic Loss (chosen because in this case, we are working with 1's and 0's) converged to about .69, and the overall score came out to .14689 (which was middle of the road; 133/189). The convolutions were able to find enough patterns that worked in order to make decent predictions.</p>
+	</section>
+
+	<section>
+		<h1>Next Steps</h1>
+		<p>One of the major issues that the cnn faced was poor evaluation. When submitted, the clock was wound forward, checking the resulting end state against the original. For this project, I trained the model to predict specific start states based on the end state. Not only is this frequently impossible, there is also not one correct answer. Consider if the following three configurations were somewhere in the training data:</p>
+
+		<img src="Different_Patterns.jpg">
+
+		<p>The three patterns have very little overlap, yet they all result in the same end state. Using typical means, as I did, results in unjustified loss. Even if the CNN came up with a proper solution (a pattern where the middle square is dead and surrounded by 3 other squares), it will likely be the <i>wrong right</i> solution, and our CNN will unlearn the good patterns it has established. I think this may be one reason why the CNN did not converge to a lower loss.</p>
+
+		<p>Ideally, the loss function and evaluation would have matched this model. However, this proved difficult. Winding the clock forward while ignoring the gradients would not train the model, it would just tell us that the model was wrong. I think that it may be wise to build the CNN to have two outputs: one which is the predicted start state, and one which is the reconstructed end state. This framework, similar to our supervised autoencoder, would help encode the data in a way that none of the information in the original end state is lost. This is displayed in the image below:</p>
+
+		<img src="Proposed_Conway_CNN.jpg">
+
+		<p>However, for this to work, these layers would need to wind time forward appropriately. To solve this issue, I hand created a neural network that could help in this process. Consider the following convolution:</p>
+
+		<img src="Perfect_Convolution.jpg">
+
+		<p>With this convolution, note that when used on a 0-1 board, there are 18 possibilities, 0 through 17. 0 if all cells are dead, 0-8 are represented by the number of livingi neighbor cells; 9 represents a living center cell with no neighbors; 10 through 18 represent a living center cell with some (or all) living neighbors.</p>
+
+		<p>Because each of these numbers distinctly shows the state of the center cell (living or dead) and the number of living neighbors, it can be used to decide if the center cell should live. It should live if the result is 3 (dead cell touching 3 living neigbors), 11, or 12 (living, with 2 or 3 neighbors, respectively). This should make it easy to train a neural network to predict Conway's Game of Life.</p>
+
+		<p>I was able to create such a neural network that could perform forward steps flawlessly. However, I'm still working on using it to improve the results of my CNN. I am hopeful that this will allow the neural network to be rewarded for all good solutions, not just one random, predetermined possibility.</p>
+
+	</section>
+
+	<section>
+		<h1>Sources</h1>
+		<ol>
+			<li>https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life</li>
+			<li>https://bdtechtalks.com/2020/09/16/deep-learning-game-of-life/</li>
+			<li>https://medium.com/@tomgrek/evolving-game-of-life-neural-networks-chaos-and-complexity-94b509bc7aa8</li>
+		</ol>
+	</section>
+
+</body>
+
+</html
