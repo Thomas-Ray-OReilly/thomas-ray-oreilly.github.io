@@ -82,7 +82,7 @@
 
 		<p>With this convolution, note that when used on a 0-1 board, there are 18 possibilities, 0 through 17. 0 if all cells are dead, 0-8 are represented by the number of living neighbor cells; 9 represents a living center cell with no neighbors; 10 through 18 represent a living center cell with some (or all) living neighbors.</p>
 
-		<p>Because each of these numbers distinctly shows the state of the center cell (living or dead) and the number of living neighbors, it can be used to decide if the center cell should live. It should live if the result is 3 (dead cell touching 3 living neigbors), 11, or 12 (living, with 2 or 3 neighbors, respectively). This should make it easy to train a neural network to predict Conway's Game of Life.</p>
+		<p>Because each of these numbers distinctly shows the state of the center cell (living or dead) and the number of living neighbors, it can be used to decide if the center cell should live. It should live if the result is 3 (dead cell touching 3 living neighbors), 11, or 12 (living, with 2 or 3 neighbors, respectively). This should make it easy to train a neural network to predict Conway's Game of Life.</p>
 
 		<p>I was able to create such a neural network that could perform forward steps flawlessly. However, I'm still working on using it to improve the results of my CNN. I am hopeful that this will allow the neural network to be rewarded for all good solutions, not just one random, predetermined possibility.</p>
 
